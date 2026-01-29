@@ -6,6 +6,7 @@ Convert TALIMEX Internal TSS files to Standard TSS format.
 import streamlit as st
 import zipfile
 import io
+import gc
 from pathlib import Path
 from openpyxl import load_workbook
 
@@ -348,18 +349,40 @@ def process_file(input_bytes: bytes, input_filename: str, progress_callback=None
     output_wb.save(output_buffer)
     output_buffer.seek(0)
 
+    # Close workbook to free memory
+    output_wb.close()
+
     return output_buffer.getvalue()
 
 
 def main():
-    # Header
-    st.markdown("""
-    <div class="main-header">
-        <div class="main-title">📊 TALIMEX Internal TSS Converter</div>
-        <div class="main-subtitle">Convert TALIMEX Internal TSS to Standard Internal TSS</div>
-    </div>
-    <div class="divider"></div>
-    """, unsafe_allow_html=True)
+    # Clear old processed files when new files are uploaded
+    uploaded_files = st.session_state.get('file_uploader', None)
+    current_count = len(uploaded_files) if uploaded_files else 0
+    if 'last_upload_count' in st.session_state:
+        if current_count != st.session_state['last_upload_count']:
+            if 'processed_files' in st.session_state:
+                del st.session_state['processed_files']
+            gc.collect()
+    st.session_state['last_upload_count'] = current_count
+
+    # Header with Reset button
+    header_cols = st.columns([4, 1])
+    with header_cols[0]:
+        st.markdown("""
+        <div class="main-header">
+            <div class="main-title">📊 TALIMEX Internal TSS Converter</div>
+            <div class="main-subtitle">Convert TALIMEX Internal TSS to Standard Internal TSS</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with header_cols[1]:
+        if st.button("🔄 Reset", help="Clear all data and start fresh"):
+            for key in list(st.session_state.keys()):
+                del st.session_state[key]
+            gc.collect()
+            st.rerun()
+
+    st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
     # Upload section
     st.markdown("""
@@ -385,10 +408,14 @@ def main():
     # Validation
     st.markdown("#### Validation Results")
 
+    # Cache file bytes to avoid reading multiple times
+    file_bytes_cache = {}
+    for uploaded_file in uploaded_files:
+        file_bytes_cache[uploaded_file.name] = uploaded_file.read()
+
     validation_results = []
     for uploaded_file in uploaded_files:
-        file_bytes = uploaded_file.read()
-        uploaded_file.seek(0)
+        file_bytes = file_bytes_cache[uploaded_file.name]
         result = validate_file_content(file_bytes, uploaded_file.name)
         validation_results.append((uploaded_file, result))
 
@@ -426,7 +453,7 @@ def main():
 
         for uploaded_file in valid_files:
             status_text.text(f"Processing: {uploaded_file.name}")
-            file_bytes = uploaded_file.read()
+            file_bytes = file_bytes_cache[uploaded_file.name]
 
             def update_progress(step, status):
                 progress_bar.progress(step / 4)
@@ -447,6 +474,10 @@ def main():
         st.success("All files processed successfully!")
 
         st.session_state['processed_files'] = processed_files
+
+        # Clear cache and collect garbage after processing
+        file_bytes_cache.clear()
+        gc.collect()
 
     # Download section
     if 'processed_files' in st.session_state and st.session_state['processed_files']:
