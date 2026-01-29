@@ -105,6 +105,31 @@ st.markdown("""
     div.stButton > button:hover {
         background: #2563eb;
     }
+
+    /* Reset button in top right corner */
+    .reset-btn-container {
+        position: fixed;
+        top: 14px;
+        right: 14px;
+        z-index: 999;
+    }
+
+    .reset-btn-container button {
+        background: #f3f4f6 !important;
+        color: #374151 !important;
+        border: 1px solid #d1d5db !important;
+        border-radius: 6px !important;
+        padding: 0.4rem 0.8rem !important;
+        font-size: 0.85rem !important;
+        font-weight: 500 !important;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .reset-btn-container button:hover {
+        background: #e5e7eb !important;
+        border-color: #9ca3af !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -366,23 +391,23 @@ def main():
             gc.collect()
     st.session_state['last_upload_count'] = current_count
 
-    # Header with Reset button
-    header_cols = st.columns([4, 1])
-    with header_cols[0]:
-        st.markdown("""
-        <div class="main-header">
-            <div class="main-title">📊 TALIMEX Internal TSS Converter</div>
-            <div class="main-subtitle">Convert TALIMEX Internal TSS to Standard Internal TSS</div>
-        </div>
-        """, unsafe_allow_html=True)
-    with header_cols[1]:
-        if st.button("🔄 Reset", help="Clear all data and start fresh"):
-            for key in list(st.session_state.keys()):
-                del st.session_state[key]
-            gc.collect()
-            st.rerun()
+    # Reset button in top right corner
+    st.markdown('<div class="reset-btn-container">', unsafe_allow_html=True)
+    if st.button("🔄 Reset", help="Clear all data and start fresh"):
+        for key in list(st.session_state.keys()):
+            del st.session_state[key]
+        gc.collect()
+        st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
-    st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
+    # Header (centered)
+    st.markdown("""
+    <div class="main-header">
+        <div class="main-title">📊 TALIMEX Internal TSS Converter</div>
+        <div class="main-subtitle">Convert TALIMEX Internal TSS to Standard Internal TSS</div>
+    </div>
+    <div class="divider"></div>
+    """, unsafe_allow_html=True)
 
     # Upload section
     st.markdown("""
