@@ -106,30 +106,6 @@ st.markdown("""
         background: #2563eb;
     }
 
-    /* Reset button in top right corner */
-    .reset-btn-container {
-        position: fixed;
-        top: 14px;
-        right: 14px;
-        z-index: 999;
-    }
-
-    .reset-btn-container button {
-        background: #f3f4f6 !important;
-        color: #374151 !important;
-        border: 1px solid #d1d5db !important;
-        border-radius: 6px !important;
-        padding: 0.4rem 0.8rem !important;
-        font-size: 0.85rem !important;
-        font-weight: 500 !important;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-
-    .reset-btn-container button:hover {
-        background: #e5e7eb !important;
-        border-color: #9ca3af !important;
-    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -390,15 +366,6 @@ def main():
                 del st.session_state['processed_files']
             gc.collect()
     st.session_state['last_upload_count'] = current_count
-
-    # Reset button in top right corner
-    st.markdown('<div class="reset-btn-container">', unsafe_allow_html=True)
-    if st.button("🔄 Reset", help="Clear all data and start fresh"):
-        for key in list(st.session_state.keys()):
-            del st.session_state[key]
-        gc.collect()
-        st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
 
     # Header (centered)
     st.markdown("""
